@@ -1,31 +1,75 @@
 import streamlit as st
 import subprocess
 import os
+import time
+import requests
+import polars as pl
 
-def download_and_run_notebook():
-    repo_url = "https://github.com/KikeTG/Dercoparts_AP.git"
-    notebook_path = "KPIs/Forecast_A_Parquet.ipynb"
-    repo_name = "Dercoparts_AP"
+st.set_page_config(page_title="Menu Scripts", page_icon="⏱️")
+st.title("Menú de Ejecución de Scripts")
 
-    try:
-        # Clonar el repositorio si no está clonado
-        if not os.path.exists(repo_name):
-            subprocess.run(["git", "clone", repo_url], check=True)
-        
-        # Cambiar al directorio del repositorio
-        os.chdir(repo_name)
+opcion = st.radio("Selecciona el Script a Ejecutar:", ("Disponibilidad Futura por Canales (Local)", "Disponibilidad Futura por Canales (GitHub)", "Forecast a Parquet (GitHub)"))
 
-        # Abrir el notebook utilizando Jupyter
-        subprocess.run(["jupyter", "notebook", notebook_path], check=True)
+if opcion == "Disponibilidad Futura por Canales (Local)":
+    semana = st.number_input("Semana (1-4):", min_value=1, max_value=4, step=1)
+    tienda = st.selectbox("Incluir tiendas:", options=[0, 1], format_func=lambda x: "No" if x == 0 else "Sí")
+    faltan = st.selectbox("Incluir faltantes:", options=[0, 1], format_func=lambda x: "No" if x == 0 else "Sí")
+    ruta_script = os.path.join(os.path.expanduser("~"), r"DERCO CHILE REPUESTOS SpA\Planificación y abastecimiento - Documentos\Planificación y Compras AFM\S&OP Demanda\Codigos Demanda\Dispo-Canal2.py")
+    if st.button("Ejecutar"):
+        if not os.path.exists(ruta_script):
+            st.error("Archivo no encontrado.")
+        else:
+            start_time = time.time()
+            with st.spinner("Ejecutando..."):
+                result = subprocess.run(["python", ruta_script, str(semana), str(tienda), str(faltan)], capture_output=True, text=True, encoding="utf-8")
+            total_time = time.time() - start_time
+            st.success(f"Ejecución completada en {total_time:.2f} segundos.")
+            st.code(result.stdout, language='text')
+            if result.stderr:
+                st.error("Errores detectados:")
+                st.code(result.stderr, language='text')
 
-    except Exception as e:
-        st.error(f"Error al ejecutar el notebook: {e}")
+elif opcion == "Disponibilidad Futura por Canales (GitHub)":
+    semana = st.number_input("Semana (1-4):", min_value=1, max_value=4, step=1)
+    tienda = st.selectbox("Incluir tiendas:", options=[0, 1], format_func=lambda x: "No" if x == 0 else "Sí")
+    faltan = st.selectbox("Incluir faltantes:", options=[0, 1], format_func=lambda x: "No" if x == 0 else "Sí")
+    url_script = "https://raw.githubusercontent.com/KikeTG/Dercoparts_AP/main/Dispo/Dispo-Canal2.py"
+    if st.button("Descargar y Ejecutar"):
+        with st.spinner("Descargando..."):
+            r = requests.get(url_script)
+            script_path = "Dispo-Canal2_temp.py"
+            with open(script_path, "w", encoding="utf-8") as f:
+                f.write(r.text)
+        start_time = time.time()
+        with st.spinner("Ejecutando..."):
+            result = subprocess.run(["python", script_path, str(semana), str(tienda), str(faltan)], capture_output=True, text=True, encoding="utf-8")
+        total_time = time.time() - start_time
+        st.success(f"Ejecución completada en {total_time:.2f} segundos.")
+        st.code(result.stdout, language='text')
+        if result.stderr:
+            st.error("Errores detectados:")
+            st.code(result.stderr, language='text')
+        os.remove(script_path)
 
-    finally:
-        # Volver al directorio original
-        os.chdir("..")
+elif opcion == "Forecast a Parquet (GitHub)":
+    url_script = "https://raw.githubusercontent.com/KikeTG/Dercoparts_AP/main/Streamlit/Scripts%20a%20Ejecutar/Forecast_A_Parquet.py"
+    if st.button("Descargar y Ejecutar"):
+        with st.spinner("Descargando..."):
+            r = requests.get(url_script)
+            script_path = "Forecast_A_Parquet_temp.py"
+            with open(script_path, "w", encoding="utf-8") as f:
+                f.write(r.text)
+        start_time = time.time()
+        with st.spinner("Ejecutando..."):
+            result = subprocess.run(["python", script_path], capture_output=True, text=True, encoding="utf-8")
+        total_time = time.time() - start_time
+        st.success(f"Ejecución completada en {total_time:.2f} segundos.")
+        st.code(result.stdout, language='text')
+        if result.stderr:
+            st.error("Errores detectados:")
+            st.code(result.stderr, language='text')
+        os.remove(script_path)
 
-st.title("Ejecutor de Notebook desde GitHub")
-
-if st.button("Ejecutar Notebook"):
-    download_and_run_notebook()
+st.markdown("Referencias:")
+st.markdown("- Humphrey, W. (1989). Managing the Software Process. Addison-Wesley.")
+st.markdown("- Pressman, R. S. (2010). Software Engineering: A Practitioner's Approach. McGraw-Hill.")
