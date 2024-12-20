@@ -8,28 +8,9 @@ import polars as pl
 st.set_page_config(page_title="Menu Scripts", page_icon="⏱️")
 st.title("Menú de Ejecución de Scripts")
 
-opcion = st.radio("Selecciona el Script a Ejecutar:", ("Disponibilidad Futura por Canales (Local)", "Disponibilidad Futura por Canales (GitHub)", "Forecast a Parquet (GitHub)"))
+opcion = st.radio("Selecciona el Script a Ejecutar:", ("Disponibilidad Futura por Canales (GitHub)", "Forecast a Parquet (GitHub)"))
 
-if opcion == "Disponibilidad Futura por Canales (Local)":
-    semana = st.number_input("Semana (1-4):", min_value=1, max_value=4, step=1)
-    tienda = st.selectbox("Incluir tiendas:", options=[0, 1], format_func=lambda x: "No" if x == 0 else "Sí")
-    faltan = st.selectbox("Incluir faltantes:", options=[0, 1], format_func=lambda x: "No" if x == 0 else "Sí")
-    ruta_script = os.path.join(os.path.expanduser("~"), r"DERCO CHILE REPUESTOS SpA\Planificación y abastecimiento - Documentos\Planificación y Compras AFM\S&OP Demanda\Codigos Demanda\Dispo-Canal2.py")
-    if st.button("Ejecutar"):
-        if not os.path.exists(ruta_script):
-            st.error("Archivo no encontrado.")
-        else:
-            start_time = time.time()
-            with st.spinner("Ejecutando..."):
-                result = subprocess.run(["python", ruta_script, str(semana), str(tienda), str(faltan)], capture_output=True, text=True, encoding="utf-8")
-            total_time = time.time() - start_time
-            st.success(f"Ejecución completada en {total_time:.2f} segundos.")
-            st.code(result.stdout, language='text')
-            if result.stderr:
-                st.error("Errores detectados:")
-                st.code(result.stderr, language='text')
-
-elif opcion == "Disponibilidad Futura por Canales (GitHub)":
+if opcion == "Disponibilidad Futura por Canales (GitHub)":
     semana = st.number_input("Semana (1-4):", min_value=1, max_value=4, step=1)
     tienda = st.selectbox("Incluir tiendas:", options=[0, 1], format_func=lambda x: "No" if x == 0 else "Sí")
     faltan = st.selectbox("Incluir faltantes:", options=[0, 1], format_func=lambda x: "No" if x == 0 else "Sí")
@@ -69,7 +50,3 @@ elif opcion == "Forecast a Parquet (GitHub)":
             st.error("Errores detectados:")
             st.code(result.stderr, language='text')
         os.remove(script_path)
-
-st.markdown("Referencias:")
-st.markdown("- Humphrey, W. (1989). Managing the Software Process. Addison-Wesley.")
-st.markdown("- Pressman, R. S. (2010). Software Engineering: A Practitioner's Approach. McGraw-Hill.")
