@@ -3,7 +3,6 @@ import subprocess
 import os
 import time
 import requests
-import polars as pl
 
 st.set_page_config(page_title="Menu Scripts", page_icon="⏱️")
 st.title("Menú de Ejecución de Scripts")
@@ -18,18 +17,23 @@ def limpiar_conflictos(contenido):
             filtradas.append(linea)
     return "\n".join(filtradas)
 
+def instalar_dependencias():
+    subprocess.run(["python", "-m", "pip", "install", "polars"], capture_output=True, text=True, encoding="utf-8")
+
 if opcion == "Disponibilidad Futura por Canales (GitHub)":
     semana = st.number_input("Semana (1-4):", min_value=1, max_value=4, step=1)
     tienda = st.selectbox("Incluir tiendas:", options=[0, 1], format_func=lambda x: "No" if x == 0 else "Sí")
     faltan = st.selectbox("Incluir faltantes:", options=[0, 1], format_func=lambda x: "No" if x == 0 else "Sí")
     url_script = "https://raw.githubusercontent.com/KikeTG/Dercoparts_AP/main/Dispo/Dispo-Canal2.py"
-    if st.button("Descargar y Ejecutar"):
+    if st.button("Descargar, Instalar Dependencias y Ejecutar"):
         with st.spinner("Descargando..."):
             r = requests.get(url_script)
             contenido_limpio = limpiar_conflictos(r.text)
             script_path = "Dispo-Canal2_temp.py"
             with open(script_path, "w", encoding="utf-8") as f:
                 f.write(contenido_limpio)
+        with st.spinner("Instalando dependencias..."):
+            instalar_dependencias()
         start_time = time.time()
         with st.spinner("Ejecutando..."):
             result = subprocess.run(["python", script_path, str(semana), str(tienda), str(faltan)], capture_output=True, text=True, encoding="utf-8")
@@ -43,13 +47,15 @@ if opcion == "Disponibilidad Futura por Canales (GitHub)":
 
 elif opcion == "Forecast a Parquet (GitHub)":
     url_script = "https://raw.githubusercontent.com/KikeTG/Dercoparts_AP/main/Streamlit/Scripts%20a%20Ejecutar/Forecast_A_Parquet.py"
-    if st.button("Descargar y Ejecutar"):
+    if st.button("Descargar, Instalar Dependencias y Ejecutar"):
         with st.spinner("Descargando..."):
             r = requests.get(url_script)
             contenido_limpio = limpiar_conflictos(r.text)
             script_path = "Forecast_A_Parquet_temp.py"
             with open(script_path, "w", encoding="utf-8") as f:
                 f.write(contenido_limpio)
+        with st.spinner("Instalando dependencias..."):
+            instalar_dependencias()
         start_time = time.time()
         with st.spinner("Ejecutando..."):
             result = subprocess.run(["python", script_path], capture_output=True, text=True, encoding="utf-8")
